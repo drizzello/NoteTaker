@@ -4,7 +4,11 @@ from backend.transcript_manager import YouTubeTranscriptManager
 from backend.ai_manager import AIManager
 from frontend.styles import STYLES
 
+
+
+
 class StreamlitUI:
+    
     def __init__(self):
         self.setup_page_config()
         self.setup_styles()
@@ -27,20 +31,20 @@ class StreamlitUI:
                 st.session_state[key] = False if key != 'response' else ""
 
     def render_header(self):
-        col1, col2 = st.columns([1, 4])
-        with col1:
+         col1, col2 = st.columns([1, 4])
+         with col1:
             st.markdown("# 📚")
-        with col2:
+         with col2:
             st.markdown("""
-                <h1 style='margin-bottom: 0;'>YouTube Notes Taker</h1>
-                <p style='color: #666; margin-top: 0;'>Transform video content into organized notes</p>
+                  <h1 style='margin-bottom: 0; color: #00000; font-size: 3em;'>SmartScribe AI</h1>
+                  <p style='color: #666; margin-top: 0.5em; font-size: 1.2em;'>Never Miss the Good Parts. Get Written Video Highlights in Seconds ⚡️ </p>
+                  <p style='color: #888; font-size: 1em; font-style: italic;'>Powered by Gemini AI | Skip the Fluff • Catch Key Points • Save Time </p>
             """, unsafe_allow_html=True)
-
     def process_video(self, video_link: str):
         try:
             video_id = YouTubeTranscriptManager.extract_video_id(video_link)
             if not video_id:
-                st.error("❌ Invalid YouTube link")
+                st.error("❌ Invalid YouTube link. If you think the link is valid, try to push again the button.")
                 return
 
             video_info = YouTubeTranscriptManager.get_transcript(video_id)
@@ -94,8 +98,15 @@ class StreamlitUI:
                         self.generate_summary(video_info.formatted_text)
 
 
-        st.markdown("""
-            <div style='text-align: center; color: #666; padding: 2rem 0;'>
-                <p>Made with ❤️ by Your 🐯 Company </p>
-            </div>
-        """, unsafe_allow_html=True)
+    def render_footer(self):
+      st.markdown("""
+        <div style='text-align: center; color: #666; padding: 2rem 0;'>
+            <p>Made with ❤️ by Your 🐯 Company </p>
+            <a href="https://www.buymeacoffee.com/daviderizz" target="_blank">
+                <img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" 
+                style="height: 20px !important;width: 100px !important;">
+            </a>
+        </div>
+    """, unsafe_allow_html=True)
+
+

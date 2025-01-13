@@ -32,5 +32,7 @@ STYLES = """
     border: 1px solid #EF5350;
 }
 </style>
+
+
 """
 
