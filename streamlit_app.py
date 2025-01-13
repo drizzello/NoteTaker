@@ -40,7 +40,7 @@ if st.button("Get transcript"):
 
   st.write(text_formatted)
 
-genai.configure(st.secrets["api_key"])
+genai.configure(api_key = st.secrets["api_key"])
 
 # Create the model
 generation_config = {
