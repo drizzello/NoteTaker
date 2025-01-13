@@ -14,33 +14,51 @@ import google.generativeai as genai
 #-----------------------------
 
 
+
 transcript = {}
 formatter = TextFormatter()
 
 st.header(":books: Youtube Notes Taker")
 video_link = st.text_input("Insert video link")
 
-#video_id = video_link.split("=")[1]
-#st.write(video_id)
 
 if st.button("Get transcript"):
-  url_data = parser.urlparse(video_link)
-  query = parser.parse_qs(url_data.query)
-  video = query["v"][0]
-  transcript = YouTubeTranscriptApi.get_transcript(video, languages=("en", "it"))
-  text_formatted = formatter.format_transcript(transcript)
+    url_data = parser.urlparse(video_link)
+    query = parser.parse_qs(url_data.query)
 
-  # .format_transcript(transcript) turns the transcript into a JSON string.
-  # Initialization
-  if 'text_formatted' not in st.session_state:
-      st.session_state['text_formatted'] = text_formatted
-  else:
-      st.session_state['text_formatted'] = text_formatted
+    # Handle normal YouTube video links (e.g., https://www.youtube.com/watch?v=bQnrsK9tEUI)
+    if "v" in query:
+        video_id = query["v"][0]
+    else:
+        # Handle YouTube short and live links (e.g., https://youtu.be/bQnrsK9tEUI or /live)
+        path_parts = url_data.path.split("/")
+        if "live" in path_parts or "shorts" in path_parts:
+            video_id = path_parts[-1]
+        else:
+            st.error("Invalid YouTube link")
+            st.stop()
+
+    try:
+        # Recupero trascrizione (in inglese o italiano)
+        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=["en", "it"])
+        text_formatted = formatter.format_transcript(transcript)
+
+        # Salvataggio nello stato della sessione
+        st.session_state['text_formatted'] = text_formatted
+
+        st.success("Transcript retrieved successfully!")
+
+    except Exception as e:
+        st.error(f"Error retrieving transcript: {e}")
 
 
-  st.write(text_formatted)
+# Checkbox per mostrare il transcript
+if "text_formatted" in st.session_state:
+    if st.checkbox("Show Transcript"):
+        st.text_area("Transcript", st.session_state['text_formatted'], height=300)
 
-genai.configure(api_key = st.secrets["api_key"])
+#genai.configure(api_key = st.secrets["api_key"])
+genai.configure(api_key = "AIzaSyAFq4p_PxK9F0X7uu0GILhvO53MAd5FJpY")
 
 # Create the model
 generation_config = {
