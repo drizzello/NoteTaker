@@ -17,16 +17,17 @@ class AIManager:
                 "max_output_tokens": 8192,
                 "response_mime_type": "text/plain",
             },
-            system_instruction="""
-                Act as a professional note-taking assistant. Analyze the YouTube video transcript and provide a summary.
-                For the summary use the language of the text provided.
-                Follow the following structure:
-                1. A concise summary of main points in the 
-                2. Key concepts and ideas
-                3. Important details and relevant examples
-                4. Main conclusions and takeaways
-                Present the result in a clear, organized manner using bullet points and readable structure.
-            """
+            system_instruction = """ Act as a professional note-taking assistant. 
+         You are given a YouTube video transcript, read it carefully then provide a summary.
+         Strictly follow these rules:
+         - The language of the summary must match the language of the video transcript
+         - The summary must have this structure:
+         - Concise summary of the main points
+         - Key concepts and ideas
+         - Important details and relevant examples
+         - Main conclusions and takeaways
+         - The summary must be written in a clear, organized manner, using bullet points and a readable structure
+         """
         )
 
     def generate_summary(self, text: str) -> str:

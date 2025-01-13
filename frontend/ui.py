@@ -9,7 +9,8 @@ class StreamlitUI:
         self.setup_page_config()
         self.setup_styles()
         self.init_session_state()
-        self.ai_manager = AIManager(st.secrets["api_key"])
+        #self.ai_manager = AIManager(st.secrets["api_key"])
+        self.ai_manager = AIManager("AIzaSyAFq4p_PxK9F0X7uu0GILhvO53MAd5FJpY")
     def setup_page_config(self):
         st.set_page_config(
             page_title="YouTube Notes Taker",
@@ -91,6 +92,7 @@ class StreamlitUI:
                 with st.spinner("Fetching transcript and summarizing..."):
                     if video_info := self.process_video(video_link):
                         self.generate_summary(video_info.formatted_text)
+
 
         st.markdown("""
             <div style='text-align: center; color: #666; padding: 2rem 0;'>
