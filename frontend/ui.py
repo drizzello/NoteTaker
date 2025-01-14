@@ -40,7 +40,9 @@ class StreamlitUI:
                   <p style='color: #666; margin-top: 0.5em; font-size: 1.2em;'>Never Miss the Good Parts. Get Written Video Highlights in Seconds ⚡️ </p>
                   <p style='color: #888; font-size: 1em; font-style: italic;'>Powered by Gemini AI | Skip the Fluff • Catch Key Points • Save Time </p>
             """, unsafe_allow_html=True)
-    def process_video(self, video_link: str):
+
+    @st.cache_data(show_spinner=False)        
+    def process_video(_self, video_link: str):
         try:
             video_id = YouTubeTranscriptManager.extract_video_id(video_link)
             if not video_id:
@@ -53,46 +55,36 @@ class StreamlitUI:
                  'text_formatted': video_info.formatted_text,
                  'transcript_ready': True
             })
-            #st.success(video_info.formatted_text) #for debug
+            with st.expander(label="Show Transcript"):
+                st.write(video_info.formatted_text) #for debug
             st.success("✅ Transcript retrived successfully!")
             return video_info
 
         except Exception as e:
             st.error(f"❌ Error retrieving transcript: {str(e)}")
-            return 
+            return None
 
     def generate_summary(self, text: str):
-        max_retries = 5  # Number of retry attempts
-        attempt = 0
-        success = False
-
-        while attempt < max_retries and not success:
-            try:
-                summary = self.ai_manager.generate_summary(text)
-                st.session_state['response'] = summary
-                st.success("✨ Summary generated successfully!")
+        try:
+            summary = self.ai_manager.generate_summary(text)
+            st.session_state['response'] = summary
+            st.success("✨ Summary generated successfully!")
+            
+            with st.container():
+                st.markdown("### 📋 Summary")
+                st.markdown(summary)
                 
-                with st.container():
-                    st.markdown("### 📋 Summary")
-                    st.markdown(summary)
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.download_button(
-                            "📥 Download as TXT",
-                            summary,
-                            file_name="summary.txt",
-                            mime="text/plain",
-                            use_container_width=True
-                        )
-                success = True  # Exit the loop if the summary is successfully generated
-
-            except Exception as e:
-                attempt += 1
-                st.warning(f"⚠️ Attempt {attempt} of {max_retries}: Failed to generate summary. Retrying...")
-        
-        if not success:
-            st.error("❌ Failed to generate summary after multiple attempts. Please try again later.")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.download_button(
+                        "📥 Download as TXT",
+                        summary,
+                        file_name="summary.txt",
+                        mime="text/plain",
+                        use_container_width=True
+                    )
+        except Exception as e:
+            st.error(f"❌ Error generating summary: {str(e)}")
 
     def render_main(self):
         self.render_header()
@@ -126,6 +118,7 @@ class StreamlitUI:
             if st.button("📝 Get Transcript and Summarize it", use_container_width=True) and video_link:
                 with st.spinner("Fetching transcript and summarizing..."):
                     if video_info := self.process_video(video_link):
+                        #st.write(video_info.formatted_text)
                         self.generate_summary(video_info.formatted_text)
 
 

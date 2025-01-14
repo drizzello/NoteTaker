@@ -49,7 +49,6 @@ class YouTubeTranscriptManager:
 
     @staticmethod
     def get_captions_other_api(video_id, video_link: str, lang='it') -> Optional[VideoInfo]:
-        """Fetch available captions for the video using YouTube Data API v3."""
         try:
             command = [
             'yt-dlp', '--write-auto-subs', '--skip-download',
@@ -75,7 +74,7 @@ class YouTubeTranscriptManager:
 
 
         except Exception as e:
-            print(f"❌ Error retrieving captions using YouTube API: {str(e)}")
+            print(f"❌ Error retrieving captions using API: {str(e)}")
             return None
 
 @staticmethod
