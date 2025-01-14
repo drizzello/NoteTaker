@@ -74,7 +74,7 @@ class YouTubeTranscriptManager:
                     return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
                 else:
                     print("No .vtt file found.")    
-                    return None 
+                    return 
 
             # If captions were streamed successfully, clean them
             formatted_text = vtt_to_clean_text_from_string(result.stdout)
@@ -83,7 +83,7 @@ class YouTubeTranscriptManager:
 
         except Exception as e:
             print(f"❌ Error retrieving captions using API: {str(e)}")
-            return None
+            return 
 
 @staticmethod
 def vtt_to_clean_text(file_path):
