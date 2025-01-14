@@ -62,7 +62,7 @@ class StreamlitUI:
 
         except Exception as e:
             st.error(f"❌ Error retrieving transcript: {str(e)}")
-            return None
+            return 
 
     def generate_summary(self, text: str):
         try:
