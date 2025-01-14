@@ -11,6 +11,7 @@ import re
 import streamlit as st
 import yt_dlp
 import requests
+import glob
 
 @dataclass
 class VideoInfo:
@@ -69,6 +70,9 @@ class YouTubeTranscriptManager:
             # If captions were written to a file, read and clean them
             vtt_file = f"./tmp/{video_id}.{lang}.vtt"
             if os.path.exists(vtt_file):
+                files = glob.glob('/tmp/*')
+                st.write("Files in /tmp directory:", files)
+
                 formatted_text = YouTubeTranscriptManager.vtt_to_clean_text(vtt_file)  # Read the .vtt file
                 #os.remove(vtt_file)  # Optionally delete the file after reading
                 return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
