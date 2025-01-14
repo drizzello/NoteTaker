@@ -13,8 +13,7 @@ class StreamlitUI:
         self.setup_page_config()
         self.setup_styles()
         self.init_session_state()
-        #self.ai_manager = AIManager(st.secrets["api_key"])
-        self.ai_manager = AIManager("AIzaSyAFq4p_PxK9F0X7uu0GILhvO53MAd5FJpY")
+        self.ai_manager = AIManager(st.secrets["api_key"])
     def setup_page_config(self):
         st.set_page_config(
             page_title="YouTube Notes Taker",
@@ -36,7 +35,7 @@ class StreamlitUI:
             st.markdown("# 📚")
          with col2:
             st.markdown("""
-                  <h1 style='margin-bottom: 0; color: #00000; font-size: 3em;'>SmartScribe AI</h1>
+                  <h1 style='margin-bottom: 0; color: #00000; font-size: 3em;'>ContentCrunch AI</h1>
                   <p style='color: #666; margin-top: 0.5em; font-size: 1.2em;'>Never Miss the Good Parts. Get Written Video Highlights in Seconds ⚡️ </p>
                   <p style='color: #888; font-size: 1em; font-style: italic;'>Powered by Gemini AI | Skip the Fluff • Catch Key Points • Save Time </p>
             """, unsafe_allow_html=True)
@@ -81,15 +80,33 @@ class StreamlitUI:
         except Exception as e:
             st.error(f"❌ Error generating summary: {str(e)}")
 
-    def render(self):
+    def render_main(self):
         self.render_header()
         
         with st.container():
             st.markdown("### 🎥 Enter Video URL")
             video_link = st.text_input(
-                "",
+                "Youtube Video Url",
                 placeholder="Paste your YouTube video URL here...",
-                help="Works with regular YouTube videos, shorts, and live streams"
+                help="Works with regular YouTube videos, shorts, and live streams",
+                label_visibility="hidden"
+            )
+                    # Informative message below the input field
+            st.markdown(
+                  """
+                  <div class="message" style="
+                     padding: 0.5rem 1rem;
+                     background-color: #f9f9f9;
+                     border-left: 4px solid #90D4B7;
+                     color: #333;
+                     font-size: 0.9rem;
+                     margin-top: 0.5rem;
+                     border-radius: 5px;
+                  ">
+                     ⚠️ **Note:** This system uses free APIs and may occasionally experience limitations or fail to retrieve data.
+                  </div>
+                  """,
+                  unsafe_allow_html=True
             )
 
             if st.button("📝 Get Transcript and Summarize it", use_container_width=True) and video_link:
@@ -102,6 +119,7 @@ class StreamlitUI:
       st.markdown("""
         <div style='text-align: center; color: #666; padding: 2rem 0;'>
             <p>Made with ❤️ by Your 🐯 Company </p>
+            <p>Support my work 👇 </p>
             <a href="https://www.buymeacoffee.com/daviderizz" target="_blank">
                 <img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" 
                 style="height: 20px !important;width: 100px !important;">
