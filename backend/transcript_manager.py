@@ -60,32 +60,23 @@ class YouTubeTranscriptManager:
             # Updated yt-dlp command
             command = [
                 'yt-dlp', '--write-auto-subs', '--skip-download',
-                '--sub-lang', lang, '--sub-format', 'vtt', '--output', './tmp/%(id)s.%(ext)s', video_link
+                '--sub-lang', lang, '--sub-format', 'vtt', '--output', f'./tmp/{video_id}.{lang}.%(ext)s', video_link
             ]
             result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            st.write(f"Exit code: {result.returncode}")
-            st.write(f"Error output: {result.stderr}")  # This might show YouTube's error message
-            
-            if "HTTP Error 429" in result.stderr:
-                st.write("Rate limit detected!")
-            elif "ERROR: Unable to download webpage" in result.stderr:
-                st.write("Possible IP block detected!")
-
+          
 
             if result.returncode != 0 or not result.stdout.strip():
                 st.write(f"Warning: Captions saved as .vtt file, attempting to process it...")
 
                 vtt_file = f"./tmp/{video_id}.{lang}.vtt"
                 if os.path.exists(vtt_file):
+                    st.write(f"Reading .vtt file: {vtt_file}")
                     formatted_text = YouTubeTranscriptManager.vtt_to_clean_text(vtt_file)
                     os.remove(vtt_file)
                     return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
                 else:
-                    print("No .vtt file found.")    
-                    return 
-            vtt_file = f"./tmp/{video_id}.vtt"
-            if os.path.exists(vtt_file):
-                st.write(f"Reading .vtt file: {vtt_file}")
+                    st.warning("No .vtt file found. Captions may not be available.")
+                    return None
 
             # If captions were streamed successfully, clean them
             formatted_text = YouTubeTranscriptManager.vtt_to_clean_text_from_string(result.stdout)
