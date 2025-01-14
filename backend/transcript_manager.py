@@ -39,15 +39,13 @@ class YouTubeTranscriptManager:
     def get_transcript(video_link, video_id: str, languages: List[str] = ["it", "en"]) -> Optional[VideoInfo]:
         """Fetch and format transcript for a given video ID using youtube-transcript-api."""
         try:
-            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=languages)
-            formatted_text = TextFormatter().format_transcript(transcript)
-            return VideoInfo(video_id, transcript, formatted_text)
+      
+            return YouTubeTranscriptManager.get_captions_other_api(video_id, video_link=video_link)
         
         except Exception as e:
             print(f"❌ youtube-transcript-api failed: {str(e)}")
-            print("Falling back to YouTube API...")
             # Attempt to use YouTube Data API v3 if youtube-transcript-api fails
-            return YouTubeTranscriptManager.get_captions_other_api(video_id, video_link)
+            #return YouTubeTranscriptManager.get_captions_other_api(video_id, video_link)
 
     @staticmethod
     def get_captions_other_api(video_id, video_link: str, lang='it') -> Optional[VideoInfo]:
@@ -68,7 +66,7 @@ class YouTubeTranscriptManager:
                     os.remove(vtt_file)
                     return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
                 else:
-                    print("No .vtt file found.")
+                    print("No .vtt file found.")    
                     return None
 
             # If captions were streamed successfully, clean them

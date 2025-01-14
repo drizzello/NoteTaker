@@ -54,6 +54,7 @@ class StreamlitUI:
                  'transcript_ready': True
             })
             #st.success(video_info.formatted_text) #for debug
+            st.success("✅ Transcript retrived successfully!")
             return video_info
 
         except Exception as e:
@@ -61,26 +62,37 @@ class StreamlitUI:
             return None
 
     def generate_summary(self, text: str):
-        try:
-            summary = self.ai_manager.generate_summary(text)
-            st.session_state['response'] = summary
-            st.success("✨ Summary generated successfully!")
-            
-            with st.container():
-                st.markdown("### 📋 Summary")
-                st.markdown(summary)
+        max_retries = 5  # Number of retry attempts
+        attempt = 0
+        success = False
+
+        while attempt < max_retries and not success:
+            try:
+                summary = self.ai_manager.generate_summary(text)
+                st.session_state['response'] = summary
+                st.success("✨ Summary generated successfully!")
                 
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.download_button(
-                        "📥 Download as TXT",
-                        summary,
-                        file_name="summary.txt",
-                        mime="text/plain",
-                        use_container_width=True
-                    )
-        except Exception as e:
-            st.error(f"❌ Error generating summary: {str(e)}")
+                with st.container():
+                    st.markdown("### 📋 Summary")
+                    st.markdown(summary)
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.download_button(
+                            "📥 Download as TXT",
+                            summary,
+                            file_name="summary.txt",
+                            mime="text/plain",
+                            use_container_width=True
+                        )
+                success = True  # Exit the loop if the summary is successfully generated
+
+            except Exception as e:
+                attempt += 1
+                st.warning(f"⚠️ Attempt {attempt} of {max_retries}: Failed to generate summary. Retrying...")
+        
+        if not success:
+            st.error("❌ Failed to generate summary after multiple attempts. Please try again later.")
 
     def render_main(self):
         self.render_header()
