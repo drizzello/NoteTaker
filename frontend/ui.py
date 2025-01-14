@@ -54,7 +54,7 @@ class StreamlitUI:
                 'text_formatted': video_info.formatted_text,
                 'transcript_ready': True
             })
-            st.success("video_info.formatted_text")
+            st.success(f"{video_info.formatted_text}")
             st.success("✅ Transcript retrieved successfully!")
             return video_info
 

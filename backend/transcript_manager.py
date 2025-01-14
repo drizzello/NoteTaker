@@ -60,27 +60,21 @@ class YouTubeTranscriptManager:
             # Updated yt-dlp command
             command = [
                 'yt-dlp', '--write-auto-subs', '--skip-download',
-                '--sub-lang', lang, '--sub-format', 'vtt', '--output', f'./tmp/{video_id}.{lang}.%(ext)s', video_link
+                '--sub-lang', lang, '--sub-format', 'vtt', '--output', f'./tmp/{video_id}.%(ext)s', video_link
             ]
             result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
           
 
-            if result.returncode != 0 or not result.stdout.strip():
-                st.write(f"Warning: Captions saved as .vtt file, attempting to process it...")
+            # If captions were written to a file, read and clean them
+            vtt_file = f"./tmp/{video_id}.{lang}.vtt"
+            if os.path.exists(vtt_file):
+                formatted_text = YouTubeTranscriptManager.vtt_to_clean_text(vtt_file)  # Read the .vtt file
+                os.remove(vtt_file)  # Optionally delete the file after reading
+                return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
+            else:
+                st.write("No .vtt file found.")
+                return None
 
-                vtt_file = f"./tmp/{video_id}.{lang}.vtt"
-                if os.path.exists(vtt_file):
-                    st.write(f"Reading .vtt file: {vtt_file}")
-                    formatted_text = YouTubeTranscriptManager.vtt_to_clean_text(vtt_file)
-                    os.remove(vtt_file)
-                    return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
-                else:
-                    st.warning("No .vtt file found. Captions may not be available.")
-                    return None
-
-            # If captions were streamed successfully, clean them
-            formatted_text = YouTubeTranscriptManager.vtt_to_clean_text_from_string(result.stdout)
-            return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
 
 
         except Exception as e:
