@@ -62,6 +62,7 @@ class YouTubeTranscriptManager:
                 'yt-dlp', '--write-auto-subs', '--skip-download',
                 '--sub-lang', lang, '--sub-format', 'vtt', '--output', f'./tmp/{video_id}.%(ext)s', video_link
             ]
+
             result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
           
 
@@ -69,12 +70,11 @@ class YouTubeTranscriptManager:
             vtt_file = f"./tmp/{video_id}.{lang}.vtt"
             if os.path.exists(vtt_file):
                 formatted_text = YouTubeTranscriptManager.vtt_to_clean_text(vtt_file)  # Read the .vtt file
-                os.remove(vtt_file)  # Optionally delete the file after reading
+                #os.remove(vtt_file)  # Optionally delete the file after reading
                 return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
             else:
                 st.write("No .vtt file found.")
                 return None
-
 
 
         except Exception as e:
