@@ -4,8 +4,7 @@ from backend.transcript_manager import YouTubeTranscriptManager
 from backend.ai_manager import AIManager
 from frontend.styles import STYLES
 import os
-
-
+import glob
 
 
 class StreamlitUI:
@@ -118,6 +117,11 @@ class StreamlitUI:
                 with st.spinner("Fetching transcript and summarizing..."):
                     st.write("Current working directory:", os.getcwd())
                     st.write("Available files:", os.listdir())
+                    files = glob.glob('/tmp/*')
+                    st.write("Files in /tmp directory:", files)
+
+
+
 
                     if video_info := self.process_video(video_link):
                         #st.write(video_info.formatted_text)
