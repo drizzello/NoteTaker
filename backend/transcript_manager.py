@@ -8,6 +8,7 @@ from googleapiclient.discovery import build
 import subprocess
 import os
 import re
+import streamlit as st
 
 @dataclass
 class VideoInfo:
@@ -55,17 +56,17 @@ class YouTubeTranscriptManager:
             '--sub-lang', lang, '--output', '-', video_link
             ]
             result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            print(f"Exit code: {result.returncode}")
-            print(f"Error output: {result.stderr}")  # This might show YouTube's error message
+            st.write(f"Exit code: {result.returncode}")
+            st.write(f"Error output: {result.stderr}")  # This might show YouTube's error message
             
             if "HTTP Error 429" in result.stderr:
-                print("Rate limit detected!")
+                st.write("Rate limit detected!")
             elif "ERROR: Unable to download webpage" in result.stderr:
-                print("Possible IP block detected!")
+                st.write("Possible IP block detected!")
 
 
             if result.returncode != 0 or not result.stdout.strip():
-                print(f"Warning: Captions saved as .vtt file, attempting to process it...")
+                st.write(f"Warning: Captions saved as .vtt file, attempting to process it...")
 
                 vtt_file = f"-.{lang}.vtt"
                 if os.path.exists(vtt_file):
