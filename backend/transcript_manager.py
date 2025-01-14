@@ -4,6 +4,10 @@ from typing import Optional, Dict, List
 import urllib.parse as parser
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
+from googleapiclient.discovery import build
+import subprocess
+import os
+import re
 
 @dataclass
 class VideoInfo:
@@ -32,8 +36,91 @@ class YouTubeTranscriptManager:
             return path_parts[-1]  # Ultima parte della path come ID del video
 
     @staticmethod
-    def get_transcript(video_id: str, languages: List[str] = ["it", "en"]) -> VideoInfo:
-        """Fetch and format transcript for a given video ID."""
-        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=languages)
-        formatted_text = TextFormatter().format_transcript(transcript)
-        return VideoInfo(video_id, transcript, formatted_text)
+    def get_transcript(video_link, video_id: str, languages: List[str] = ["it", "en"]) -> Optional[VideoInfo]:
+        """Fetch and format transcript for a given video ID using youtube-transcript-api."""
+        try:
+            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=languages)
+            formatted_text = TextFormatter().format_transcript(transcript)
+            return VideoInfo(video_id, transcript, formatted_text)
+        
+        except Exception as e:
+            print(f"❌ youtube-transcript-api failed: {str(e)}")
+            print("Falling back to YouTube API...")
+            # Attempt to use YouTube Data API v3 if youtube-transcript-api fails
+            return YouTubeTranscriptManager.get_captions_other_api(video_id, video_link)
+
+    @staticmethod
+    def get_captions_other_api(video_id, video_link: str, lang='it') -> Optional[VideoInfo]:
+        """Fetch available captions for the video using YouTube Data API v3."""
+        try:
+            command = [
+            'yt-dlp', '--write-auto-subs', '--skip-download',
+            '--sub-lang', lang, '--output', '-', video_link
+            ]
+            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+            if result.returncode != 0 or not result.stdout.strip():
+                print(f"Warning: Captions saved as .vtt file, attempting to process it...")
+
+                vtt_file = f"-.{lang}.vtt"
+                if os.path.exists(vtt_file):
+                    formatted_text = vtt_to_clean_text(vtt_file)
+                    os.remove(vtt_file)
+                    return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
+                else:
+                    print("No .vtt file found.")
+                    return None
+
+            # If captions were streamed successfully, clean them
+            formatted_text = vtt_to_clean_text_from_string(result.stdout)
+            return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
+
+
+        except Exception as e:
+            print(f"❌ Error retrieving captions using YouTube API: {str(e)}")
+            return None
+
+@staticmethod
+def vtt_to_clean_text(file_path):
+    """
+    Convert .vtt file to plain text, remove repetitions and tags.
+    """
+    with open(file_path, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+
+    cleaned_lines = clean_repetitions(lines)
+    return '\n'.join(cleaned_lines)
+
+@staticmethod
+def vtt_to_clean_text_from_string(vtt_content: str):
+    """
+    Convert VTT content (string format) to plain text, remove repetitions and tags.
+    """
+    lines = vtt_content.split('\n')
+    cleaned_lines = clean_repetitions(lines)
+    return '\n'.join(cleaned_lines)
+
+@staticmethod
+def clean_repetitions(lines):
+    """
+    Remove timestamps, HTML-like tags, and repeated consecutive lines.
+    """
+    cleaned_lines = []
+    last_line = None
+
+    for line in lines:
+        line = line.strip()
+
+        # Skip timestamps and empty lines
+        if '-->' in line or line.isdigit() or not line:
+            continue
+
+        # Remove tags (like <c>, <b>, etc.)
+        clean_line = re.sub(r'<[^>]+>', '', line)
+
+        # Avoid consecutive duplicates
+        if clean_line != last_line:
+            cleaned_lines.append(clean_line)
+            last_line = clean_line
+
+    return cleaned_lines
