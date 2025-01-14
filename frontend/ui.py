@@ -3,6 +3,7 @@ import streamlit as st
 from backend.transcript_manager import YouTubeTranscriptManager
 from backend.ai_manager import AIManager
 from frontend.styles import STYLES
+import os
 
 
 
@@ -40,29 +41,6 @@ class StreamlitUI:
                   <p style='color: #666; margin-top: 0.5em; font-size: 1.2em;'>Never Miss the Good Parts. Get Written Video Highlights in Seconds ⚡️ </p>
                   <p style='color: #888; font-size: 1em; font-style: italic;'>Powered by Gemini AI | Skip the Fluff • Catch Key Points • Save Time </p>
             """, unsafe_allow_html=True)
-
-    @st.cache_data(show_spinner=False)        
-    def process_video(_self, video_link: str):
-        try:
-            video_id = YouTubeTranscriptManager.extract_video_id(video_link)
-            if not video_id:
-                st.error("❌ Invalid YouTube link. If you think the link is valid, try to push again the button.")
-                return
-
-            video_info = YouTubeTranscriptManager.get_transcript(video_id = video_id, video_link=video_link)
-
-            st.session_state.update({
-                 'text_formatted': video_info.formatted_text,
-                 'transcript_ready': True
-            })
-            with st.expander(label="Show Transcript"):
-                st.write(video_info.formatted_text) #for debug
-            st.success("✅ Transcript retrived successfully!")
-            return video_info
-
-        except Exception as e:
-            st.error(f"❌ Error retrieving transcript: {str(e)}")
-            return 
 
     def generate_summary(self, text: str):
         try:
@@ -117,6 +95,9 @@ class StreamlitUI:
 
             if st.button("📝 Get Transcript and Summarize it", use_container_width=True) and video_link:
                 with st.spinner("Fetching transcript and summarizing..."):
+                    st.write("Current working directory:", os.getcwd())
+                    st.write("Available files:", os.listdir())
+
                     if video_info := self.process_video(video_link):
                         #st.write(video_info.formatted_text)
                         self.generate_summary(video_info.formatted_text)

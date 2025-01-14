@@ -9,6 +9,8 @@ import subprocess
 import os
 import re
 import streamlit as st
+import yt_dlp
+import requests
 
 @dataclass
 class VideoInfo:
@@ -41,7 +43,7 @@ class YouTubeTranscriptManager:
         """Fetch and format transcript for a given video ID using youtube-transcript-api."""
         try:
       
-            return YouTubeTranscriptManager.get_captions_other_api(video_id, video_link=video_link)
+            return YouTubeTranscriptManager.get_captions_other_api2(video_id, video_link=video_link)
         
         except Exception as e:
             print(f"❌ youtube-transcript-api failed: {str(e)}")
@@ -53,7 +55,7 @@ class YouTubeTranscriptManager:
         try:
             command = [
             'yt-dlp', '--write-auto-subs', '--skip-download',
-            '--sub-lang', lang, '--output', '-', video_link
+            '--sub-lang', lang, '--sub-format', 'vtt', '--output', '-', video_link
             ]
             result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             st.write(f"Exit code: {result.returncode}")
@@ -70,7 +72,7 @@ class YouTubeTranscriptManager:
 
                 vtt_file = f"-.{lang}.vtt"
                 if os.path.exists(vtt_file):
-                    formatted_text = vtt_to_clean_text(vtt_file)
+                    formatted_text = YouTubeTranscriptManager.vtt_to_clean_text(vtt_file)
                     os.remove(vtt_file)
                     return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
                 else:
@@ -78,55 +80,83 @@ class YouTubeTranscriptManager:
                     return 
 
             # If captions were streamed successfully, clean them
-            formatted_text = vtt_to_clean_text_from_string(result.stdout)
+            formatted_text = YouTubeTranscriptManager.vtt_to_clean_text_from_string(result.stdout)
             return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
 
 
         except Exception as e:
             print(f"❌ Error retrieving captions using API: {str(e)}")
             return 
+    
+    @staticmethod
+    def get_captions_other_api2(video_id, video_link: str, lang='it') -> Optional[VideoInfo]:
+        ydl_opts = {
+            'skip_download': True,
+            'writeautomaticsub': True,
+            'subtitleslangs': [lang],
+            'quiet': True,
+            'subtitlesformat': 'vtt'
+        }
 
-@staticmethod
-def vtt_to_clean_text(file_path):
-    """
-    Convert .vtt file to plain text, remove repetitions and tags.
-    """
-    with open(file_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(video_link, download=False)
+                subs = info.get('automatic_captions', {}).get(lang, [])
+                if not subs:
+                    st.error("❌ No captions found for this language.")
+                    return None
 
-    cleaned_lines = clean_repetitions(lines)
-    return '\n'.join(cleaned_lines)
+                # Get the URL of the captions
+                url = subs[0]['url']
+                response = requests.get(url)
+                formatted_text = YouTubeTranscriptManager.vtt_to_clean_text_from_string(response.text)
+                return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
 
-@staticmethod
-def vtt_to_clean_text_from_string(vtt_content: str):
-    """
-    Convert VTT content (string format) to plain text, remove repetitions and tags.
-    """
-    lines = vtt_content.split('\n')
-    cleaned_lines = clean_repetitions(lines)
-    return '\n'.join(cleaned_lines)
+        except Exception as e:
+            st.error(f"❌ Error fetching captions: {str(e)}")
+            return None
 
-@staticmethod
-def clean_repetitions(lines):
-    """
-    Remove timestamps, HTML-like tags, and repeated consecutive lines.
-    """
-    cleaned_lines = []
-    last_line = None
+    @staticmethod
+    def vtt_to_clean_text(file_path):
+        """
+        Convert .vtt file to plain text, remove repetitions and tags.
+        """
+        with open(file_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
 
-    for line in lines:
-        line = line.strip()
+        cleaned_lines = YouTubeTranscriptManager.clean_repetitions(lines)
+        return '\n'.join(cleaned_lines)
 
-        # Skip timestamps and empty lines
-        if '-->' in line or line.isdigit() or not line:
-            continue
+    @staticmethod
+    def vtt_to_clean_text_from_string(vtt_content: str):
+        """
+        Convert VTT content (string format) to plain text, remove repetitions and tags.
+        """
+        lines = vtt_content.split('\n')
+        cleaned_lines = YouTubeTranscriptManager.clean_repetitions(lines)
+        return '\n'.join(cleaned_lines)
 
-        # Remove tags (like <c>, <b>, etc.)
-        clean_line = re.sub(r'<[^>]+>', '', line)
+    @staticmethod
+    def clean_repetitions(lines):
+        """
+        Remove timestamps, HTML-like tags, and repeated consecutive lines.
+        """
+        cleaned_lines = []
+        last_line = None
 
-        # Avoid consecutive duplicates
-        if clean_line != last_line:
-            cleaned_lines.append(clean_line)
-            last_line = clean_line
+        for line in lines:
+            line = line.strip()
 
-    return cleaned_lines
+            # Skip timestamps and empty lines
+            if '-->' in line or line.isdigit() or not line:
+                continue
+
+            # Remove tags (like <c>, <b>, etc.)
+            clean_line = re.sub(r'<[^>]+>', '', line)
+
+            # Avoid consecutive duplicates
+            if clean_line != last_line:
+                cleaned_lines.append(clean_line)
+                last_line = clean_line
+
+        return cleaned_lines
