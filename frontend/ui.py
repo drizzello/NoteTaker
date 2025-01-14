@@ -124,6 +124,10 @@ class StreamlitUI:
 
 
                     if video_info := self.process_video(video_link):
+                        files = glob.glob('/tmp/*')
+                        st.write("Files in /tmp directory:", files)
+
+
                         #st.write(video_info.formatted_text)
                         self.generate_summary(video_info.formatted_text)
 
