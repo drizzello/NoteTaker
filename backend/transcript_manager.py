@@ -43,7 +43,7 @@ class YouTubeTranscriptManager:
         """Fetch and format transcript for a given video ID using youtube-transcript-api."""
         try:
       
-            return YouTubeTranscriptManager.get_captions_other_api2(video_id, video_link=video_link)
+            return YouTubeTranscriptManager.get_captions_other_api(video_id, video_link=video_link)
         
         except Exception as e:
             print(f"❌ youtube-transcript-api failed: {str(e)}")
@@ -53,9 +53,14 @@ class YouTubeTranscriptManager:
     @staticmethod
     def get_captions_other_api(video_id, video_link: str, lang='it') -> Optional[VideoInfo]:
         try:
+            # Create a temporary directory if it doesn't exist
+            os.makedirs('./tmp', exist_ok=True)
+
+
+            # Updated yt-dlp command
             command = [
-            'yt-dlp', '--write-auto-subs', '--skip-download',
-            '--sub-lang', lang, '--sub-format', 'vtt', '--output', '-', video_link
+                'yt-dlp', '--write-auto-subs', '--skip-download',
+                '--sub-lang', lang, '--sub-format', 'vtt', '--output', './tmp/%(id)s.%(ext)s', video_link
             ]
             result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             st.write(f"Exit code: {result.returncode}")
@@ -70,7 +75,7 @@ class YouTubeTranscriptManager:
             if result.returncode != 0 or not result.stdout.strip():
                 st.write(f"Warning: Captions saved as .vtt file, attempting to process it...")
 
-                vtt_file = f"-.{lang}.vtt"
+                vtt_file = f"./tmp/{video_id}.{lang}.vtt"
                 if os.path.exists(vtt_file):
                     formatted_text = YouTubeTranscriptManager.vtt_to_clean_text(vtt_file)
                     os.remove(vtt_file)
@@ -78,6 +83,9 @@ class YouTubeTranscriptManager:
                 else:
                     print("No .vtt file found.")    
                     return 
+            vtt_file = f"./tmp/{video_id}.vtt"
+            if os.path.exists(vtt_file):
+                st.write(f"Reading .vtt file: {vtt_file}")
 
             # If captions were streamed successfully, clean them
             formatted_text = YouTubeTranscriptManager.vtt_to_clean_text_from_string(result.stdout)
@@ -88,33 +96,6 @@ class YouTubeTranscriptManager:
             print(f"❌ Error retrieving captions using API: {str(e)}")
             return 
     
-    @staticmethod
-    def get_captions_other_api2(video_id, video_link: str, lang='it') -> Optional[VideoInfo]:
-        ydl_opts = {
-            'skip_download': True,
-            'writeautomaticsub': True,
-            'subtitleslangs': [lang],
-            'quiet': True,
-            'subtitlesformat': 'vtt'
-        }
-
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(video_link, download=False)
-                subs = info.get('automatic_captions', {}).get(lang, [])
-                if not subs:
-                    st.error("❌ No captions found for this language.")
-                    return None
-
-                # Get the URL of the captions
-                url = subs[0]['url']
-                response = requests.get(url)
-                formatted_text = YouTubeTranscriptManager.vtt_to_clean_text_from_string(response.text)
-                return VideoInfo(video_id=video_id, transcript="", formatted_text=formatted_text)
-
-        except Exception as e:
-            st.error(f"❌ Error fetching captions: {str(e)}")
-            return None
 
     @staticmethod
     def vtt_to_clean_text(file_path):

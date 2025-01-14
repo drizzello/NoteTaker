@@ -41,6 +41,27 @@ class StreamlitUI:
                   <p style='color: #666; margin-top: 0.5em; font-size: 1.2em;'>Never Miss the Good Parts. Get Written Video Highlights in Seconds ⚡️ </p>
                   <p style='color: #888; font-size: 1em; font-style: italic;'>Powered by Gemini AI | Skip the Fluff • Catch Key Points • Save Time </p>
             """, unsafe_allow_html=True)
+    
+    def process_video(self, video_link: str):
+        try:
+            video_id = YouTubeTranscriptManager.extract_video_id(video_link)
+            if not video_id:
+                st.error("❌ Invalid YouTube link. If you think the link is valid, try to push again the button.")
+                return
+
+            video_info = YouTubeTranscriptManager.get_transcript(video_link, video_id)
+            st.session_state.update({
+                'text_formatted': video_info.formatted_text,
+                'transcript_ready': True
+            })
+            st.success("video_info.formatted_text")
+            st.success("✅ Transcript retrieved successfully!")
+            return video_info
+
+        except Exception as e:
+            st.error(f"❌ Error retrieving transcript: {str(e)}")
+            return None
+
 
     def generate_summary(self, text: str):
         try:
