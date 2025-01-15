@@ -5,6 +5,8 @@ from backend.ai_manager import AIManager
 from frontend.styles import STYLES
 import os
 import glob
+import time
+
 
 
 class StreamlitUI:
@@ -15,6 +17,7 @@ class StreamlitUI:
         self.init_session_state()
         #self.ai_manager = AIManager(st.secrets["api_key"])
         self.ai_manager = AIManager("AIzaSyAFq4p_PxK9F0X7uu0GILhvO53MAd5FJpY")
+
     def setup_page_config(self):
         st.set_page_config(
             page_title="YouTube Notes Taker",
@@ -41,26 +44,49 @@ class StreamlitUI:
                   <p style='color: #888; font-size: 1em; font-style: italic;'>Powered by Gemini AI | Skip the Fluff • Catch Key Points • Save Time </p>
             """, unsafe_allow_html=True)
     
-    def process_video(self, video_link: str):
+
+    @st.cache_data(show_spinner=False)
+    def process_video(_self, video_link: str, max_retries: int = 5, retry_delay: float = 2.0):
         try:
             video_id = YouTubeTranscriptManager.extract_video_id(video_link)
             if not video_id:
-                st.error("❌ Invalid YouTube link. If you think the link is valid, try to push again the button.")
-                return
+                st.error("❌ Invalid YouTube link. If you think the link is valid, try pushing again the button.")
+                return None
 
-            video_info = YouTubeTranscriptManager.get_transcript(video_link, video_id)
-            st.session_state.update({
-                'text_formatted': video_info.formatted_text,
-                'transcript_ready': True
-            })
-            st.success(f"{video_info.formatted_text}")
-            st.success("✅ Transcript retrieved successfully!")
-            return video_info
+            attempt = 0
+            video_info = None
 
-        except Exception as e:
-            st.error(f"❌ Error retrieving transcript: {str(e)}")
+            # Retry loop
+            while attempt < max_retries:
+                try:
+                    st.write(f"Attempt {attempt + 1} to retrieve transcript...")
+                    video_info = YouTubeTranscriptManager.get_transcript(video_link, video_id)
+
+                    if video_info and video_info.formatted_text:
+                        st.session_state.update({
+                            'text_formatted': video_info.formatted_text,
+                            'transcript_ready': True
+                        })
+                        st.success("✅ Transcript retrieved successfully!")
+                        st.expander(video_info.formatted_text)
+
+                        return video_info
+                    else:
+                        st.warning("No transcription found. Retrying...")
+
+                except Exception as inner_e:
+                    st.warning(f"Attempt {attempt + 1} failed: {str(inner_e)}")
+
+                # Increment attempt and wait before retrying
+                attempt += 1
+                time.sleep(retry_delay)
+
+            st.error("❌ Unable to retrieve the transcript after multiple attempts. I'm so sorry :(")
             return None
 
+        except Exception as e:
+            st.error(f"❌ Critical error: {str(e)}")
+            return None
 
     def generate_summary(self, text: str):
         try:
@@ -115,17 +141,15 @@ class StreamlitUI:
 
             if st.button("📝 Get Transcript and Summarize it", use_container_width=True) and video_link:
                 with st.spinner("Fetching transcript and summarizing..."):
-                    st.write("Current working directory:", os.getcwd())
-                    st.write("Available files:", os.listdir())
-                    files = glob.glob('/tmp/*')
-                    st.write("Files in /tmp directory:", files)
-
-
+                    #st.write("Current working directory:", os.getcwd())
+                    #st.write("Available files:", os.listdir())
+                    #files = glob.glob('/tmp/*')
+                    #st.write("Files in /tmp directory:", files)
 
 
                     if video_info := self.process_video(video_link):
-                        files = glob.glob('/tmp/*')
-                        st.write("Files in /tmp directory:", files)
+                        #files = glob.glob('/tmp/*')
+                        #st.write("Files in /tmp directory:", files)
 
 
                         #st.write(video_info.formatted_text)
