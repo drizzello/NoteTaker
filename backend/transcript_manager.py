@@ -42,14 +42,28 @@ class YouTubeTranscriptManager:
     @staticmethod
     def get_transcript(video_link, video_id: str, languages: List[str] = ["it", "en"]) -> Optional[VideoInfo]:
         """Fetch and format transcript for a given video ID using youtube-transcript-api."""
-        try:
-      
-            return YouTubeTranscriptManager.get_captions_other_api(video_id, video_link=video_link)
-        
-        except Exception as e:
-            print(f"❌ youtube-transcript-api failed: {str(e)}")
-            # Attempt to use YouTube Data API v3 if youtube-transcript-api fails
-            #return YouTubeTranscriptManager.get_captions_other_api(video_id, video_link)
+        # Free proxy list
+        proxy_list = {
+                '170.78.94.200': '5678',
+                '208.109.229.141': '54557'
+                }
+        for proxy in proxy_list:
+            try:    
+                proxies = {'https': proxy, 'http': proxy}
+
+                transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['it', 'en'], proxies=proxies)
+                formatter = TextFormatter()
+                text_formatted = formatter.format_transcript(transcript=transcript)
+                #return YouTubeTranscriptManager.get_captions_other_api(video_id, video_link=video_link)
+                return VideoInfo(video_id=video_id, transcript="", formatted_text=text_formatted)
+
+            except Exception as e:
+                st.write(f"❌ youtube-transcript-api failed: {str(e)}")
+                st.write(f"❌ proxy: {proxy}")
+
+                # Attempt to use YouTube Data API v3 if youtube-transcript-api fails
+                #return YouTubeTranscriptManager.get_captions_other_api(video_id, video_link)
+
 
     @staticmethod
     def get_captions_other_api(video_id, video_link: str, lang='it') -> Optional[VideoInfo]:
@@ -61,6 +75,11 @@ class YouTubeTranscriptManager:
                 'yt-dlp', '--write-auto-subs', '--skip-download',
                 '--sub-lang', lang, '--sub-format', 'vtt', '--output', f'./tmp/{video_id}.%(ext)s', video_link
             ]
+            response = requests.get(f"https://www.youtube.com/watch?v={video}")
+            size_in_bytes = len(response.content)
+            size_in_kb = size_in_bytes / 1024
+
+            st.write(f"HTTP response size: {size_in_kb:.2f} KB")
 
             result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
           
