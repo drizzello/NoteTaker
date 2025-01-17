@@ -1,4 +1,8 @@
 import requests
+from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api.formatters import TextFormatter
+import certifi
+
 """from bs4 import BeautifulSoup
 import pickle
 
@@ -66,15 +70,19 @@ if response.status_code == 200:
 else:
    print(f"Failed to access the page. Status code: {response.status_code}")
 """
-import requests
 
-# Define the proxy
-proxy = {
-    'http': 'http://198.12.248.208:46096',
-    'https': 'https://103.163.244.106:1080'
-}
 
-# Test the proxy
+"""response = requests.get(
+    "https://www.youtube.it",
+    proxies={
+        "http": "http://16947ba98ee240fe8630f7ac961a41bc:@api.zyte.com:8011/",
+        "https": "http://16947ba98ee240fe8630f7ac961a41bc:@api.zyte.com:8011/",
+    },
+    verify='/Users/daviderizzello/Downloads/zyte-ca.crt' 
+)
+print(response.text)
+"""
+"""# Test the proxy
 try:
     response = requests.get("https://www.youtube.com/", proxies=proxy, timeout=10)
     if response.status_code == 200:
@@ -83,3 +91,34 @@ try:
         print(f"Proxy responded with status code: {response.status_code}")
 except Exception as e:
     print(f"Proxy test failed: {e}")
+"""
+
+
+# Create a requests.Session object
+session = requests.Session()
+
+# Set the certificate for HTTPS verification
+session.verify = "/Users/daviderizzello/Downloads/zyte-ca.crt"
+"""
+
+# Set the proxies
+proxies = {
+    "http": "http://16947ba98ee240fe8630f7ac961a41bc:@api.zyte.com:8011/",
+    "https": "http://16947ba98ee240fe8630f7ac961a41bc:@api.zyte.com:8011/",
+}
+
+
+# Test the session by making a GET request
+#response = session.get("https://www.youtube.it")
+#print(response.text)
+
+# Fetch YouTube transcript using the configured session
+formatter = TextFormatter()
+transcript = YouTubeTranscriptApi.get_transcript("FYc209d7LTo", languages=['it'], proxies=proxies)
+
+
+# Format the transcript if needed
+# transcript = YouTubeTranscriptApi.get_transcript("FYc209d7LTo", languages=['it'], proxies=proxies)
+formatted_text = formatter.format_transcript(transcript)
+
+print(formatted_text)

@@ -60,7 +60,7 @@ class StreamlitUI:
             while attempt < max_retries:
                 try:
                     st.write(f"Attempt {attempt + 1} to retrieve transcript...")
-                    video_info = YouTubeTranscriptManager.get_transcript(video_link, video_id)
+                    video_info = YouTubeTranscriptManager.get_transcript(video_id)
 
                     if video_info and video_info.formatted_text:
                         st.session_state.update({

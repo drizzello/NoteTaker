@@ -13,6 +13,11 @@ import yt_dlp
 import requests
 import glob
 
+
+
+os.environ["REQUESTS_CA_BUNDLE"] = os.path.join(os.getcwd(), "certificates", "zyte-ca.crt")
+
+
 @dataclass
 class VideoInfo:
     video_id: str
@@ -40,14 +45,24 @@ class YouTubeTranscriptManager:
             return path_parts[-1]  # Ultima parte della path come ID del video
 
     @staticmethod
-    def get_transcript(video_link, video_id: str, languages: List[str] = ["it", "en"]) -> Optional[VideoInfo]:
+    def get_transcript(video_id: str, languages: List[str] = ["it", "en"]) -> Optional[VideoInfo]:
         """Fetch and format transcript for a given video ID using youtube-transcript-api."""
+        #Set the proxies
+        proxies = {
+            "http": "http://16947ba98ee240fe8630f7ac961a41bc:@api.zyte.com:8011/",
+            "https": "http://16947ba98ee240fe8630f7ac961a41bc:@api.zyte.com:8011/",
+        }
+                
+
+
         try:
-      
-            return YouTubeTranscriptManager.get_captions_other_api(video_id, video_link=video_link)
+            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=languages, proxies=proxies)
+            formatter = TextFormatter()
+            formatted_text = formatter.format_transcript(transcript)
+            return VideoInfo(video_id=video_id, transcript=transcript, formatted_text=formatted_text)
         
         except Exception as e:
-            print(f"❌ youtube-transcript-api failed: {str(e)}")
+                print(f"❌ youtube-transcript-api failed: {str(e)}")
             # Attempt to use YouTube Data API v3 if youtube-transcript-api fails
             #return YouTubeTranscriptManager.get_captions_other_api(video_id, video_link)
 
