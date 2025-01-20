@@ -17,8 +17,7 @@ class StreamlitUI:
         self.setup_page_config()
         self.setup_styles()
         self.init_session_state()
-        #self.ai_manager = AIManager(st.secrets["api_key"])
-        self.ai_manager = AIManager("AIzaSyAFq4p_PxK9F0X7uu0GILhvO53MAd5FJpY")
+        self.ai_manager = AIManager(st.secrets["api_key"])
         
 
     def setup_page_config(self):
