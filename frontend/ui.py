@@ -6,6 +6,7 @@ from frontend.styles import STYLES
 import os
 import glob
 import time
+import re
 
 
 
@@ -45,8 +46,8 @@ class StreamlitUI:
             """, unsafe_allow_html=True)
     
 
-    @st.cache_data(show_spinner=False)
-    def process_video(_self, video_link: str, max_retries: int = 5, retry_delay: float = 2.0):
+    #@st.cache_data(show_spinner=False)
+    def process_video(_self, video_link: str, max_retries: int = 10, retry_delay: float = 3.0):
         try:
             video_id = YouTubeTranscriptManager.extract_video_id(video_link)
             if not video_id:
@@ -59,23 +60,22 @@ class StreamlitUI:
             # Retry loop
             while attempt < max_retries:
                 try:
-                    st.write(f"Attempt {attempt + 1} to retrieve transcript...")
-                    video_info = YouTubeTranscriptManager.get_transcript(video_id)
+                    with st.spinner(f"Your Genius is looking for the right Transcript..."):
 
-                    if video_info and video_info.formatted_text:
-                        st.session_state.update({
-                            'text_formatted': video_info.formatted_text,
-                            'transcript_ready': True
-                        })
-                        st.success("✅ Transcript retrieved successfully!")
-                        st.expander(video_info.formatted_text)
+                        video_info = YouTubeTranscriptManager.get_transcript(video_id)
 
-                        return video_info
-                    else:
-                        st.warning("No transcription found. Retrying...")
+                        if video_info and video_info.formatted_text:
+                            st.session_state.update({
+                                'text_formatted': video_info.formatted_text,
+                                'transcript_ready': True
+                            })
+                            st.success("✅ Transcript retrieved successfully!")
+                            st.expander(video_info.formatted_text)
+
+                            return video_info
 
                 except Exception as inner_e:
-                    st.warning(f"Attempt {attempt + 1} failed: {str(inner_e)}")
+                    st.warning(f"")
 
                 # Increment attempt and wait before retrying
                 attempt += 1
@@ -89,24 +89,26 @@ class StreamlitUI:
             return None
 
     def generate_summary(self, text: str):
+        words = re.findall(r'\b\w+\b', text)
         try:
-            summary = self.ai_manager.generate_summary(text)
-            st.session_state['response'] = summary
-            st.success("✨ Summary generated successfully!")
-            
-            with st.container():
-                st.markdown("### 📋 Summary")
-                st.markdown(summary)
+            with st.spinner(f"The transcript is long {len(words)} words, please give me some more time to sum it up :)"):
+                summary = self.ai_manager.generate_summary(text)
+                st.session_state['response'] = summary
+                st.success("✨ Summary generated successfully!")
                 
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.download_button(
-                        "📥 Download as TXT",
-                        summary,
-                        file_name="summary.txt",
-                        mime="text/plain",
-                        use_container_width=True
-                    )
+                with st.container():
+                    st.markdown("### 📋 Summary")
+                    st.markdown(summary)
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.download_button(
+                            "📥 Download as TXT",
+                            summary,
+                            file_name="summary.txt",
+                            mime="text/plain",
+                            use_container_width=True
+                        )
         except Exception as e:
             st.error(f"❌ Error generating summary: {str(e)}")
 
@@ -133,33 +135,21 @@ class StreamlitUI:
                      margin-top: 0.5rem;
                      border-radius: 5px;
                   ">
-                     ⚠️ **Note:** This system uses free APIs and may occasionally experience limitations or fail to retrieve data.
+                     ⚠️ **Note:** This system uses free APIs (and cheap Proxies). It may occasionally experience limitations or fail to retrieve data.
                   </div>
                   """,
                   unsafe_allow_html=True
             )
 
             if st.button("📝 Get Transcript and Summarize it", use_container_width=True) and video_link:
-                with st.spinner("Fetching transcript and summarizing..."):
-                    #st.write("Current working directory:", os.getcwd())
-                    #st.write("Available files:", os.listdir())
-                    #files = glob.glob('/tmp/*')
-                    #st.write("Files in /tmp directory:", files)
-
-
-                    if video_info := self.process_video(video_link):
-                        #files = glob.glob('/tmp/*')
-                        #st.write("Files in /tmp directory:", files)
-
-
-                        #st.write(video_info.formatted_text)
-                        self.generate_summary(video_info.formatted_text)
+                if video_info := self.process_video(video_link):
+                    self.generate_summary(video_info.formatted_text)
 
 
     def render_footer(self):
       st.markdown("""
         <div style='text-align: center; color: #666; padding: 2rem 0;'>
-            <p>Made with ❤️ by Your 🐯 Company </p>
+            <p>Made with ❤️ by 🐯 Company </p>
             <p>Support my work 👇 </p>
             <a href="https://www.buymeacoffee.com/daviderizz" target="_blank">
                 <img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" 

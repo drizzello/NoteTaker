@@ -11,7 +11,7 @@ import re
 import streamlit as st
 import yt_dlp
 import requests
-import glob
+
 
 
 
@@ -27,21 +27,21 @@ class VideoInfo:
 class YouTubeTranscriptManager:
     @staticmethod
     def extract_video_id(video_link: str) -> Optional[str]:
-         """Extract video ID from various YouTube URL formats."""
-         url_data = parser.urlparse(video_link)
-         query = parser.parse_qs(url_data.query)
+        """Extract video ID from various YouTube URL formats."""
+        url_data = parser.urlparse(video_link)
+        query = parser.parse_qs(url_data.query)
         
-         # Caso classico con 'v' nella query
-         if "v" in query:
+        # Caso classico con 'v' nella query
+        if "v" in query:
             return query["v"][0]
          
-         # URL youtu.be/<video_id>
-         if url_data.netloc == "youtu.be":
+        # URL youtu.be/<video_id>
+        if url_data.netloc == "youtu.be":
             return url_data.path.lstrip("/")  # Restituisce l'ID del video dalla path
          
-         # URL /shorts/<video_id> o /live/<video_id>
-         path_parts = url_data.path.split("/")
-         if "shorts" in path_parts or "live" in path_parts:
+        # URL /shorts/<video_id> o /live/<video_id>
+        path_parts = url_data.path.split("/")
+        if "shorts" in path_parts or "live" in path_parts:
             return path_parts[-1]  # Ultima parte della path come ID del video
 
     @staticmethod
@@ -53,19 +53,16 @@ class YouTubeTranscriptManager:
             "https": "http://16947ba98ee240fe8630f7ac961a41bc:@api.zyte.com:8011/",
         }
                 
-
-
-        try:
-            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=languages, proxies=proxies)
-            formatter = TextFormatter()
-            formatted_text = formatter.format_transcript(transcript)
-            return VideoInfo(video_id=video_id, transcript=transcript, formatted_text=formatted_text)
+        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=languages, proxies=proxies)
+        formatter = TextFormatter()
+        formatted_text = formatter.format_transcript(transcript)
+        return VideoInfo(video_id=video_id, transcript=transcript, formatted_text=formatted_text)
         
-        except Exception as e:
-                print(f"❌ youtube-transcript-api failed: {str(e)}")
-            # Attempt to use YouTube Data API v3 if youtube-transcript-api fails
-            #return YouTubeTranscriptManager.get_captions_other_api(video_id, video_link)
+        #except Exception as e:
+        #        print(f"❌ youtube-transcript-api failed: {str(e)}")
 
+
+    #backup api
     @staticmethod
     def get_captions_other_api(video_id, video_link: str, lang='it') -> Optional[VideoInfo]:
         try:
