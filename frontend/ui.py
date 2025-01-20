@@ -17,12 +17,12 @@ class StreamlitUI:
         self.setup_page_config()
         self.setup_styles()
         self.init_session_state()
-        #self.ai_manager = AIManager(st.secrets["api_key"])
-        self.ai_manager = AIManager("AIzaSyAFq4p_PxK9F0X7uu0GILhvO53MAd5FJpY")
+        self.ai_manager = AIManager(st.secrets["api_key"])
+        
 
     def setup_page_config(self):
         st.set_page_config(
-            page_title="YouTube Notes Taker",
+            page_title="Content Crunch AI",
             page_icon="📚",
             layout="centered"
         )
@@ -81,7 +81,7 @@ class StreamlitUI:
                 except:
                     pass
 
-            st.error("❌ The Genius Sometimes fails. I'm so sorry :(\n If you want to make him work better buy him a coffee ;)")
+            st.error("❌ Youtube is limiting the Genius. I'm so sorry :(\n If you want to make him work better buy him a coffee ;)")
             return None
 
         except Exception as e:
@@ -123,23 +123,6 @@ class StreamlitUI:
                 placeholder="Paste your YouTube video URL here...",
                 help="Works with regular YouTube videos, shorts, and live streams",
                 label_visibility="hidden"
-            )
-                    # Informative message below the input field
-            st.markdown(
-                  """
-                  <div class="message" style="
-                     padding: 0.5rem 1rem;
-                     background-color: #f9f9f9;
-                     border-left: 4px solid #90D4B7;
-                     color: #333;
-                     font-size: 0.9rem;
-                     margin-top: 0.5rem;
-                     border-radius: 5px;
-                  ">
-                     ⚠️ **Note:** This system uses free APIs (and cheap Proxies). It may occasionally experience limitations or fail to retrieve data.
-                  </div>
-                  """,
-                  unsafe_allow_html=True
             )
 
             if st.button("📝 Get Transcript and Summarize it", use_container_width=True) and video_link:
