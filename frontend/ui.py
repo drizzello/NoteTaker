@@ -6,6 +6,7 @@ from frontend.styles import STYLES
 import os
 import glob
 import time
+from st_copy_to_clipboard import st_copy_to_clipboard
 import re
 
 
@@ -74,14 +75,13 @@ class StreamlitUI:
 
                             return video_info
 
-                except Exception as inner_e:
-                    st.warning(f"")
+                    # Increment attempt and wait before retrying
+                    attempt += 1
+                    time.sleep(retry_delay)
+                except:
+                    pass
 
-                # Increment attempt and wait before retrying
-                attempt += 1
-                time.sleep(retry_delay)
-
-            st.error("❌ Unable to retrieve the transcript after multiple attempts. I'm so sorry :(")
+            st.error("❌ The Genius Sometimes fails. I'm so sorry :(\n If you want to make him work better buy him a coffee ;)")
             return None
 
         except Exception as e:
@@ -99,6 +99,7 @@ class StreamlitUI:
                 with st.container():
                     st.markdown("### 📋 Summary")
                     st.markdown(summary)
+                    st_copy_to_clipboard(summary, before_copy_label="Copy the Summary to Clip Board 📋", after_copy_label="Copied ✅" )
                     
                     col1, col2 = st.columns(2)
                     with col1:
