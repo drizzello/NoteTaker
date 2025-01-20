@@ -48,7 +48,7 @@ class StreamlitUI:
     
 
     #@st.cache_data(show_spinner=False)
-    def process_video(_self, video_link: str, max_retries: int = 10, retry_delay: float = 3.0):
+    def process_video(_self, video_link: str, max_retries: int = 10, retry_delay: float = 2.0):
         try:
             video_id = YouTubeTranscriptManager.extract_video_id(video_link)
             if not video_id:
@@ -74,12 +74,11 @@ class StreamlitUI:
                             st.expander(video_info.formatted_text)
 
                             return video_info
-
-                    # Increment attempt and wait before retrying
-                    attempt += 1
-                    time.sleep(retry_delay)
                 except:
                     pass
+                
+                attempt += 1
+                time.sleep(retry_delay)
 
             st.error("❌ Youtube is limiting the Genius. I'm so sorry :(\n If you want to make him work better buy him a coffee ;)")
             return None
@@ -124,7 +123,7 @@ class StreamlitUI:
                 help="Works with regular YouTube videos, shorts, and live streams",
                 label_visibility="hidden"
             )
-
+    
             if st.button("📝 Get Transcript and Summarize it", use_container_width=True) and video_link:
                 if video_info := self.process_video(video_link):
                     self.generate_summary(video_info.formatted_text)

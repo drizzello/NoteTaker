@@ -45,7 +45,7 @@ class YouTubeTranscriptManager:
             return path_parts[-1]  # Ultima parte della path come ID del video
 
     @staticmethod
-    def get_transcript(video_id: str, languages: List[str] = []) -> Optional[VideoInfo]:
+    def get_transcript(video_id: str, languages: List[str] = ["it", "en"]) -> Optional[VideoInfo]:
         """Fetch and format transcript for a given video ID using youtube-transcript-api."""
         #Set the proxies
         proxies = {
