@@ -36,10 +36,10 @@ class StreamlitUI:
                 st.session_state[key] = False if key != 'response' else ""
 
     def render_header(self):
-         col1, col2 = st.columns([1, 4])
-         with col1:
+        col1, col2 = st.columns([1, 4])
+        with col1:
             st.markdown("# 📚")
-         with col2:
+        with col2:
             st.markdown("""
                   <h1 style='margin-bottom: 0; color: #00000; font-size: 3em;'>ContentCrunch AI</h1>
                   <p style='color: #666; margin-top: 0.5em; font-size: 1.2em;'>Never Miss the Good Parts. Get Written Video Highlights in Seconds ⚡️ </p>
